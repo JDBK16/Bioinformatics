@@ -1,7 +1,9 @@
+import pandas as pd
+
 def sigma(a, b):
     """Scoring function: match +1, mismatch -1, indel -2."""
     if a == "-" or b == "-":
-        return -2
+        return -1
     if a == b:
         return 1
     return -1
@@ -45,11 +47,40 @@ def align(s, t):
     top = " ".join(p[0] for p in pairs)
     mid = " ".join("|" if p[0] == p[1] else " " for p in pairs)
     bot = " ".join(p[1] for p in pairs)
-    return V[-1][-1][0], top + "\n" + mid + "\n" + bot
+    return V, V[-1][-1][0], top + "\n" + mid + "\n" + bot
+
+# Copilot improved
+def print_matrix(s, t):
+    V, _, _ = align(s, t)
+
+    rows = [""] + list(s)
+    cols = [""] + list(t)
+    
+    print("", end="\t")
+    for col in cols:
+        print(col, end="\t")
+    print()
+    
+    for i in range(len(V)):
+        print(rows[i], end="\t")
+
+        for j in range(len(V[i])):
+            score, direction = V[i][j]
+            if direction == "left":
+                arrow = "←"
+            elif direction == "up":
+                arrow = "↑"
+            elif direction == "diag":
+                arrow = "↖"
+            else:
+                arrow = ""
+            print(f"{score}{arrow}", end="\t")
+        print()
  
  
 if __name__ == "__main__":
     s1, s2 = "GCGCATGGATTGAGCGA", "TGCGCCATTGATGACCA"
-    score, alignment = align(s1, s2)
+    V, score, alignment = align(s1, s2)
     print("Optimal score:", score)
     print(alignment)
+    print_matrix(s1, s2)
