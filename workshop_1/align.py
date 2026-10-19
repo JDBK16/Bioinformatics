@@ -76,6 +76,42 @@ def print_matrix(s, t):
                 arrow = ""
             print(f"{score}{arrow}", end="\t")
         print()
+        
+# Copilot FASTA extractor
+def read_fasta(filename):
+    sequences = {}
+
+    with open(filename) as f:
+        current_id = None
+        current_seq = []
+        keys = []
+
+        for line in f:
+            line = line.strip()
+
+            if line.startswith(">"):
+                if current_id is not None:
+                    sequences[current_id] = "".join(current_seq)
+
+                current_id = line[1:].split()[0]
+                keys.append(current_id)
+                current_seq = []
+            else:
+                current_seq.append(line)
+
+        if current_id is not None:
+            sequences[current_id] = "".join(current_seq)
+
+    return keys, sequences
+
+def pairwise_align(keys, fasta):
+    for i in range(len(keys)):
+        for j in range(i+1, len(keys)):
+            print(keys[i], "VS", keys[j] + ":")
+            _, score, alignment = align(fasta[keys[i]], fasta[keys[j]])
+            print("Optimal score:", score)
+            # print(alignment)
+
  
  
 if __name__ == "__main__":
@@ -84,3 +120,6 @@ if __name__ == "__main__":
     print("Optimal score:", score)
     print(alignment)
     print_matrix(s1, s2)
+    keys, fasta = read_fasta("02_globin_cds.fasta")
+    pairwise_align(keys, fasta)
+    
