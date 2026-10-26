@@ -1,0 +1,13 @@
+# CpG islands (UCSC hg38 cpgIslandExt) in each test file
+# positions are 1-based inclusive WITHIN the test sequence; genomic coords given too
+file	start	end	length	genomic
+test_short.fasta	18923	20395	1473	chr21:33478923-33480395
+test_short.fasta	31338	31961	624	chr21:33491338-33491961
+test_long.fasta	3132	4187	1056	chr21:33403132-33404187
+test_long.fasta	78923	80395	1473	chr21:33478923-33480395
+test_long.fasta	91338	91961	624	chr21:33491338-33491961
+test_long.fasta	141998	143376	1379	chr21:33541998-33543376
+test_long.fasta	188083	188946	864	chr21:33588083-33588946
+test_long.fasta	241571	241951	381	chr21:33641571-33641951
+test_long.fasta	242533	243378	846	chr21:33642533-33643378
+test_long.fasta	515500	515904	405	chr21:33915500-33915904

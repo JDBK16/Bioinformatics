@@ -115,11 +115,13 @@ def pairwise_align(keys, fasta):
  
  
 if __name__ == "__main__":
-    s1, s2 = "GCGCATGGATTGAGCGA", "TGCGCCATTGATGACCA"
+    #s1, s2 = "GCGCATGGATTGAGCGA", "TGCGCCATTGATGACCA"
+    s1 ='TTCCAATCTCGAGATCGGATC'
+    s2 ='GATCGGATCTTGGCCTAGCTA'
     V, score, alignment = align(s1, s2)
     print("Optimal score:", score)
     print(alignment)
-    print_matrix(s1, s2)
-    keys, fasta = read_fasta("02_globin_cds.fasta")
-    pairwise_align(keys, fasta)
+    # print_matrix(s1, s2)
+    # keys, fasta = read_fasta("02_globin_cds.fasta")
+    # pairwise_align(keys, fasta)
     
