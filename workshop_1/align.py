@@ -112,6 +112,57 @@ def pairwise_align(keys, fasta):
             print("Optimal score:", score)
             # print(alignment)
 
+
+
+def local_align(s, t):
+    V = [[None for _ in "-" + t] for _ in "-" + s]
+    V[0][0] = (0, "fin")
+    for i, a in enumerate(s, start=1):
+        V[i][0] = (0, "up")
+    for j, b in enumerate(t, start=1):
+        V[0][j] = (0, "left")
+
+    for i, a in enumerate(s, start=1):
+        for j, b in enumerate(t, start=1):
+            opts = {
+                "zero": 0,
+                "up":   V[i - 1][j][0] + sigma(a, "-"),
+                "diag": V[i - 1][j - 1][0] + sigma(a, b),
+                "left": V[i][j - 1][0] + sigma("-", b),
+            }
+            choice = max(opts, key=lambda k: opts[k])
+            V[i][j] = (opts[choice], choice)
+
+    max_coords = (0, 0)
+    max_score = 0
+    for i in range(len(s) + 1):
+        for j in range(len(t) + 1):
+            if V[i][j][0] > max_score:
+                max_coords = (i, j)
+                max_score = V[i][j][0]
+
+    # Traceback from maximum
+    i, j = max_coords
+    pairs = []
+    while V[i][j][0] != 0:
+        direction = V[i][j][1]
+        if direction == "up":
+            pairs.append((s[i - 1], "-"))
+            i -= 1
+        elif direction == "diag":
+            pairs.append((s[i - 1], t[j - 1]))
+            i -= 1
+            j -= 1
+        elif direction == "left":
+            pairs.append(("-", t[j - 1]))
+            j -= 1
+    pairs.reverse()
+
+    top = " ".join(p[0] for p in pairs)
+    mid = " ".join("|" if p[0] == p[1] else " " for p in pairs)
+    bot = " ".join(p[1] for p in pairs)
+
+    return V, max_score, top + "\n" + mid + "\n" + bot
  
  
 if __name__ == "__main__":
@@ -119,9 +170,12 @@ if __name__ == "__main__":
     s1 ='TTCCAATCTCGAGATCGGATC'
     s2 ='GATCGGATCTTGGCCTAGCTA'
     V, score, alignment = align(s1, s2)
-    print("Optimal score:", score)
+    print("Optimal global score:", score)
     print(alignment)
     # print_matrix(s1, s2)
     # keys, fasta = read_fasta("02_globin_cds.fasta")
     # pairwise_align(keys, fasta)
+    V, score, alignment = local_align(s1, s2)
+    print("Optimal local score:", score)
+    print(alignment)
     
