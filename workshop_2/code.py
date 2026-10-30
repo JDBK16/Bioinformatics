@@ -90,11 +90,7 @@ def ungapped_extend(s, t, i, j, drop_threshold=3):
             d_t -= 1
         else:
             break
-        
-    print("s backwards:", s[d_s:i])
-    print("s forwards:", s[i:x_s+1])
-    print("t backwards:", t[d_t:j])
-    print("t forwards:", t[j:x_t+1])
+    return (x_s + x_t - d_s - d_t)
     
 def sigma(a, b):
     """Scoring function: match +1, mismatch -1, indel -2."""
@@ -153,8 +149,26 @@ def banded_aligns(s, t, k, offset=0):
     return V, V[-1][-1][0], top + "\n" + mid + "\n" + bot
 
 
-"""s = "AGTCGATCGAGTCGA"
+def entire(s, t, len):
+    map = cmer_index(s, len)
+    seed_pairs = find_seeds(map, t, len)
+    hist, max_diag = diagonal_histogram(seed_pairs)
+    best = 0
+    best_ij = hist[max_diag][0]
+    for i, j in hist[max_diag]:
+        ext = ungapped_extend(s, t, i, j, 3)
+        if ext >= best:
+            best = ext
+            best_ij = (i, j)
+    return banded_aligns(s, t, 6, (i-j))
+
+        
+    
+s = "GGGAGTCGATCGAGTCGA"
 t = "AGTCGATCGAGTCGA"
+V, score, alignment = entire(s, t, 4)
+print(score, "\n", alignment)
+"""
 map = cmer_index(s, 4)
 seed_pairs = find_seeds(map, t, 4)
 histogram, max_diag = diagonal_histogram(seed_pairs)
@@ -164,9 +178,9 @@ print(seed_pairs)
 print(histogram)
 print(max_diag)
 
-ungapped_extend(s, t, 6, 6, 3)"""
+ungapped_extend(s, t, 6, 6, 3)
 
-V, score, alignment = banded_aligns("ATATATAGTTATATA", "ATATATATTTATATA", 4)
+V, score, alignment = banded_aligns("ATATATAGTTATATA", "ATATATATTTATATA", 10, 0)
 print(V)
 print(score),
-print(alignment)
+print(alignment)"""
