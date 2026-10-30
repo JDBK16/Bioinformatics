@@ -1,4 +1,5 @@
 import math
+import random
 
 # Question 1:
 ## Write log_odds_score(seq, M_plus, M_minus) matching the lecture's RATIO(x) formula, and a sliding-window scan(seq, M_plus, M_minus, window) that reports it across a long test sequence. Test on the supplied data sets to find CpG islands.
@@ -59,7 +60,7 @@ def read_fasta(filename):
 
     return keys, sequences
 
-test_short_keys, test_short_sequences = read_fasta("./workshop_3/test_short.fasta")
+test_short_keys, test_short_sequences = read_fasta("../workshop_3/test_short.fasta")
 
 M_plus = [[0.180, 0.274, 0.426, 0.120],
           [0.171, 0.368, 0.274, 0.188],
@@ -74,17 +75,37 @@ M_minus = [[0.300, 0.205, 0.285, 0.210],
 test_short_scan = scan(test_short_sequences[test_short_keys[0]], M_plus, M_minus, 200)
     
 class HMM:
-    def __init__(self, states, init, trans, emit):
+    def __init__(self, states, init, trans, emit, symbols):
         self.states = states
         self.init = init
         self.trans = trans
         self.emit = emit
+        self.symbols = symbols
         
+    def simulate(self, length):
+        start = random.random()
+        initial = 0
+        count = -1
+        while initial < start:
+            count += 1
+            initial += self.init[count]
+        
+    def joint_prob(self):
+        
+        
+
+stymbols = {
+    "A": 0,
+    "C": 1,
+    "G": 2,
+    "T": 3
+}
 states = {
     "M+": 0,
     "M-": 1
 }
-dist = {
+init = [0.25, 0.25, 0.25, 0.25]
+emit = {
     "0": [[0.180, 0.274, 0.426, 0.120],
           [0.171, 0.368, 0.274, 0.188],
           [0.161, 0.339, 0.375, 0.125],
@@ -94,4 +115,8 @@ dist = {
           [0.248, 0.246, 0.298, 0.208],
           [0.177, 0.239, 0.292, 0.292]]
 }
-tran = [[1-0.01, 0.01], []]
+trans = [[1-0.01, 0.01],
+         [0.001, 1-0.001]]
+
+HMM = HMM(states, init, trans, emit, symbols)
+HMM.simulate(2)
