@@ -1,3 +1,5 @@
+import math
+
 #Write cmer_index(seq, c) returning a dictionary mapping each length-c word to the (1-indexed) list of positions where it occurs in seq.
 def cmer_index(seq, c):
     map = {}
@@ -106,16 +108,28 @@ def banded_aligns(s, t, k, offset=0):
     V = [[None for _ in "-" + t] for _ in "-" + s]
     V[0][0] = (0, "fin")
     for i, a in enumerate(s, start=1):
-        V[i][0] = (V[i - 1][0][0] + sigma(a, "-"), "up")
+        if abs(i - 0 - offset) <= k//2:
+            V[i][0] = (V[i - 1][0][0] + sigma(a, "-"), "up")
+        else:
+            V[i][0] = (-math.inf, "up")
     for j, b in enumerate(t, start=1):
-        V[0][j] = (V[0][j - 1][0] + sigma("-", b), "left")
-    
+        if abs(0 - j - offset) <= k//2:
+            V[0][j] = (V[0][j - 1][0] + sigma("-", b), "left")
+        else:
+            V[0][j] = (-math.inf, "left")
     for i, a in enumerate(s, start=1):
         for j, b in enumerate(t, start=1):
+            if abs(i - j - offset) <= k//2:
+                up = V[i - 1][j][0]   + sigma(a, "-")
+                left = V[i][j - 1][0]   + sigma("-", b)
+                diag = V[i - 1][j - 1][0] + sigma(a, b)
+            else:
+                up = left = diag = -math.inf
+                 
             opts = {
-                "up":   V[i - 1][j][0]   + sigma(a, "-"),
-                "diag": V[i - 1][j - 1][0] + sigma(a, b),
-                "left": V[i][j - 1][0]   + sigma("-", b),
+                "up":   up,
+                "diag": diag,
+                "left": left,
             }
             choice = max(opts, key=lambda k: opts[k])
             V[i][j] = (opts[choice], choice)
@@ -139,7 +153,7 @@ def banded_aligns(s, t, k, offset=0):
     return V, V[-1][-1][0], top + "\n" + mid + "\n" + bot
 
 
-s = "AGTCGATCGAGTCGA"
+"""s = "AGTCGATCGAGTCGA"
 t = "AGTCGATCGAGTCGA"
 map = cmer_index(s, 4)
 seed_pairs = find_seeds(map, t, 4)
@@ -150,4 +164,9 @@ print(seed_pairs)
 print(histogram)
 print(max_diag)
 
-ungapped_extend(s, t, 6, 6, 3)
+ungapped_extend(s, t, 6, 6, 3)"""
+
+V, score, alignment = banded_aligns("ATATATAGTTATATA", "ATATATATTTATATA", 4)
+print(V)
+print(score),
+print(alignment)
