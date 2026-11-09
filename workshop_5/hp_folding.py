@@ -43,9 +43,33 @@ def are_adjacent(p, q):
 def generate_coords(turns):
     coords = [(0, 0), (1, 0)]
     direction = (1, 0)
-    """Return the list of residue coordinates for a list of turns, starts [(0, 0), (1, 0)]    """
-    # TODO
-    raise NotImplementedError
+    rotate = {
+        (1, 0): {
+            "L": (0, -1),
+            "F": (1, 0),
+            "R": (0, 1)
+        },
+        (0, 1): {
+            "L": (1, 0),
+            "F": (0, 1),
+            "R": (-1, 0)
+        },
+        (-1, 0): {
+            "L": (0, 1),
+            "F": (-1, 0),
+            "R": (0, -1)
+        },
+        (0, -1): {
+            "L": (-1, 0),
+            "F": (0, -1),
+            "R": (1, 0)
+        }
+    }
+    for turn in turns:
+        direction = rotate[direction][turn]
+        position = (coords[-1][0] + direction[0], coords[-1][1] + direction[1])
+        coords.append(position)
+    return coords
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +118,7 @@ def enumerate_conformations(sequence):
 # ---------------------------------------------------------------------------
 # Task 6: greedy heuristic
 # ---------------------------------------------------------------------------
-def greedy_fold(sequence, rng=random):
+def greedy_search(sequence, rng=random):
     """Build ONE conformation greedily.
 
     For each new residue k = 2, 3, ..., n-1:
