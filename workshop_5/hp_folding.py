@@ -108,10 +108,31 @@ def energy(sequence, coords):
     Easy: direct O(n^2) double loop over pairs i < j.
     Challenge: an O(n) version using a dictionary {coordinate: index} each residue checks only its four lattice neighbours.
     """
-    # TODO
-    raise NotImplementedError
-
-
+    energy = 0
+    dic = {}
+    for index, coord in enumerate(coords):
+        dic[coord] = index
+    
+    for index, coord in enumerate(coords):
+        if sequence[index] != "H":
+            dic.pop(coord, None)
+        else:
+            c1 = (coord[0] + 1, coord[1])
+            c2 = (coord[0] - 1, coord[1])
+            c3 = (coord[0], coord[1] + 1)
+            c4 = (coord[0], coord[1] - 1)
+            check = []
+            if c1 in dic: check.append(dic[c1])
+            if c2 in dic: check.append(dic[c2])
+            if c3 in dic: check.append(dic[c3])
+            if c4 in dic: check.append(dic[c4])
+            for i in check:
+                if sequence[i] == "H":
+                    energy -= 1
+            dic.pop(coord, None)
+    return energy
+                
+                
 def turns_energy(sequence, turns):
     """Energy of a turns list, or math.inf if the walk is not self-avoiding. (Handy for Task 7.)"""
     # TODO
