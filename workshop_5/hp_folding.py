@@ -76,9 +76,26 @@ def generate_coords(turns):
 # Task 2
 # ---------------------------------------------------------------------------
 def is_valid_walk(coords):
-    """True if coords is a self-avoiding walk"""
-    # TODO
-    raise NotImplementedError
+    hash_table = {0: [(0, 0)]}
+    prev = (0, 0)
+    for row, col in coords:
+        if row != 0 or col != 0:
+            hash = row + col
+            coord = (row, col)
+            if hash in hash_table:
+                if coord in hash_table[hash]:
+                    return False
+                hash_table[hash].append(coord)
+            else:
+                hash_table[hash] = [coord]
+                
+            if (abs(row-prev[0]) == 1 and col == prev[1]) or (abs(col-prev[1]) == 1 and row == prev[0]):
+                prev = coord
+            else:
+                return False
+        else:
+            prev = (0, 0)
+    return True
 
 
 # ---------------------------------------------------------------------------
