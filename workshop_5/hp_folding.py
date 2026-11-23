@@ -26,23 +26,6 @@ TURNS = ("F", "L", "R")
 # Helpers
 # ---------------------------------------------------------------------------
 def turn(direction, t):
-    """If the last step was in direction direction, return the next step after applying turn t ('F', 'L' or 'R')    """
-    # TODO
-    raise NotImplementedError
-
-
-def are_adjacent(p, q):
-    """True if lattice points p and q are lattice neighbours"""
-    # TODO
-    raise NotImplementedError
-
-
-# ---------------------------------------------------------------------------
-# Task 1
-# ---------------------------------------------------------------------------
-def generate_coords(turns):
-    coords = [(0, 0), (1, 0)]
-    direction = (1, 0)
     rotate = {
         (1, 0): {
             "L": (0, -1),
@@ -65,8 +48,25 @@ def generate_coords(turns):
             "R": (1, 0)
         }
     }
-    for turn in turns:
-        direction = rotate[direction][turn]
+    return rotate[direction][t]
+    
+
+
+def are_adjacent(p, q):
+    """True if lattice points p and q are lattice neighbours"""
+    # TODO
+    raise NotImplementedError
+
+
+# ---------------------------------------------------------------------------
+# Task 1
+# ---------------------------------------------------------------------------
+
+def generate_coords(turns):
+    coords = [(0, 0), (1, 0)]
+    direction = (1, 0)
+    for t in turns:
+        direction = turn(direction, t)
         position = (coords[-1][0] + direction[0], coords[-1][1] + direction[1])
         coords.append(position)
     return coords
@@ -78,23 +78,20 @@ def generate_coords(turns):
 def is_valid_walk(coords):
     hash_table = {0: [(0, 0)]}
     prev = (0, 0)
-    for row, col in coords:
-        if row != 0 or col != 0:
-            hash = row + col
-            coord = (row, col)
-            if hash in hash_table:
-                if coord in hash_table[hash]:
-                    return False
-                hash_table[hash].append(coord)
-            else:
-                hash_table[hash] = [coord]
-                
-            if (abs(row-prev[0]) == 1 and col == prev[1]) or (abs(col-prev[1]) == 1 and row == prev[0]):
-                prev = coord
-            else:
+    for row, col in coords[1:]:
+        hash = row + col
+        coord = (row, col)
+        if hash in hash_table:
+            if coord in hash_table[hash]:
                 return False
+            hash_table[hash].append(coord)
         else:
-            prev = (0, 0)
+            hash_table[hash] = [coord]
+            
+        if (abs(row-prev[0]) == 1 and col == prev[1]) or (abs(col-prev[1]) == 1 and row == prev[0]):
+            prev = coord
+        else:
+            return False
     return True
 
 
@@ -108,29 +105,28 @@ def energy(sequence, coords):
     Easy: direct O(n^2) double loop over pairs i < j.
     Challenge: an O(n) version using a dictionary {coordinate: index} each residue checks only its four lattice neighbours.
     """
-    energy = 0
-    dic = {}
-    for index, coord in enumerate(coords):
-        dic[coord] = index
-    
-    for index, coord in enumerate(coords):
-        if sequence[index] != "H":
-            dic.pop(coord, None)
-        else:
-            c1 = (coord[0] + 1, coord[1])
-            c2 = (coord[0] - 1, coord[1])
-            c3 = (coord[0], coord[1] + 1)
-            c4 = (coord[0], coord[1] - 1)
-            check = []
-            if c1 in dic: check.append(dic[c1])
-            if c2 in dic: check.append(dic[c2])
-            if c3 in dic: check.append(dic[c3])
-            if c4 in dic: check.append(dic[c4])
-            for i in check:
-                if sequence[i] == "H":
-                    energy -= 1
-            dic.pop(coord, None)
-    return energy
+    en = 0
+    positions = {coord: i for i, coord in enumerate(coords)}
+
+    for i, (x, y) in enumerate(coords):
+        if sequence[i] != "H":
+            continue
+
+        neighbours = [
+            (x + 1, y),
+            (x - 1, y),
+            (x, y + 1),
+            (x, y - 1)
+        ]
+
+        for neighbour in neighbours:
+            if neighbour in positions:
+                j = positions[neighbour]
+
+                if j > i and abs(i - j) > 1 and sequence[j] == "H":
+                    en -= 1
+
+    return en
                 
                 
 def turns_energy(sequence, turns):
@@ -142,16 +138,33 @@ def turns_energy(sequence, turns):
 # ---------------------------------------------------------------------------
 # Task 4: brute-force enumeration
 # ---------------------------------------------------------------------------
+
+def brute_force(sequence, turns):
+    if sequence == "":
+        combinations.append(turns)
+    else:
+        brute_force(sequence[1:], turns + "L")
+        brute_force(sequence[1:], turns + "F")
+        brute_force(sequence[1:], turns + "R")
+
 def enumerate_conformations(sequence):
-    """Enumerate every self-avoiding walk of the sequence on the 2D square lattice (first step fixed East).
-    Returns a tuple (best_energy, best_turns, n_examined):
-
-    Easy: iterate over all 3^(n-2) turn lists
-    Challenge: recursive depth-first search that places one residue at a time and abandons a branch the moment it hits an occupied point.
-    """
-    # TODO
-    raise NotImplementedError
-
+    global combinations
+    combinations = []
+    brute_force(sequence[2:], "")
+    count = 0
+    best = 0
+    best_set = []
+    for turns in combinations:
+        coords = generate_coords(turns)
+        if is_valid_walk(coords):
+            count += 1
+            en = energy(sequence, coords)
+            if en == best:
+                best_set.append(coords)
+            if en < best:
+                best = en
+                best_set = [coords]
+    return best, best_set, count
 
 # ---------------------------------------------------------------------------
 # Task 6: greedy heuristic
@@ -167,13 +180,54 @@ def greedy_search(sequence, rng=random):
 
     Returns (turns, energy, restarts), where restarts is the number of times the chain got trapped before a complete fold was built.
     """
-    # TODO
-    raise NotImplementedError
+    restarts = 0
+    while True:
+        coords = [(0, 0), (1, 0)]
+        position = {(0, 0): 0, (1, 0): 1}
+        direction = (1, 0)
+        turns = ""
+        trapped = False
+
+        for k in range(2, len(sequence)):
+            last = coords[-1]
+            best_count = math.inf
+            candidates = []
+            for t in ("L", "F", "R"):
+                d = turn(direction, t)
+                c = (last[0] + d[0], last[1] + d[1])
+                if c in position:
+                    continue
+                en = 0
+                if sequence[k] == "H":
+                    for neighbour in ((c[0] + 1, c[1]), (c[0] - 1, c[1]),
+                               (c[0], c[1] + 1), (c[0], c[1] - 1)):
+                        j = position.get(neighbour)
+                        if j is not None and j != k - 1 and sequence[j] == "H":
+                            en -= 1
+                if en < best_count:
+                    best_count = en
+                    candidates = [(t, d, c)]
+                elif en == best_count:
+                    candidates.append((t, d, c))
+
+            if not candidates:
+                trapped = True
+                break
+
+            t, direction, c = random.choice(candidates)
+            turns += t
+            coords.append(c)
+            position[c] = k
+
+        if trapped:
+            restarts += 1
+            continue
+        return turns, energy(sequence, coords), restarts
 
 # ---------------------------------------------------------------------------
 # Task 7: simulated annealing
 # ---------------------------------------------------------------------------
-def simulated_annealing(sequence, n_iter=100000, T0=2.0, alpha=0.9995,
+def simulated_annealing(sequence, n_iter=1000000, T0=2.0, alpha=0.999995,
                         T_min=0.1, patience=None, rng=random,
                         history=None, history_every=100):
     """Simulated annealing over the turns list.
@@ -199,8 +253,40 @@ def simulated_annealing(sequence, n_iter=100000, T0=2.0, alpha=0.9995,
     to cool from T0 = 2.0 to 0.1? What happens if you choose alpha so that
     the cooling takes the whole run instead?
     """
-    # TODO
-    raise NotImplementedError
+    T = T0
+    turns = ["F"]*(len(sequence) - 2)
+    current_energy = 0
+    best = turns
+    best_energy = 0
+    wait = 0
+    for _ in range(n_iter):
+        if patience:
+            if wait > patience:
+                break
+        i = random.randrange(0, len(turns))
+        t = random.choice(["L", "F", "R"])
+        turns_ = turns.copy()
+        turns_[i] = t
+        coords_ = generate_coords(turns_)
+        if not is_valid_walk(coords_):
+            T = max(alpha * T, T_min)
+            continue
+        
+        new_energy = energy(sequence, coords_)
+        if new_energy <= current_energy or (random.random() < math.exp((current_energy - new_energy) / T)):
+            current_energy = new_energy
+            turns = turns_
+            if new_energy < best_energy:
+                best_energy = new_energy
+                best = turns
+                wait = 0
+        wait += 1
+        T = max(alpha * T, T_min)
+        
+        
+            
+    return energy(sequence, generate_coords(best)), best
+
 
 # ---------------------------------------------------------------------------
 # Provided: draw a fold as ASCII art (H = hydrophobic, p = polar)
@@ -275,7 +361,7 @@ def task_8_9():
 
 
 if __name__ == "__main__":
-    random.seed(1)
+    random.seed(2)
     section("Tasks 1-3: coordinates, validity, energy", task_1_to_3)
     section("Task 5: brute force on prefixes of " + LECTURE_SEQ, task_5)
     section("Task 6: greedy search", task_6)
